@@ -197,6 +197,58 @@ export const faq = {
   ],
 };
 
+export const booking = {
+  pill: 'Reserva tu cita',
+  reassurance: 'Sin cargos de cancelación hasta 24h antes • Pago seguro',
+  steps: [
+    ['Elige el ritual', 'Selecciona el tratamiento perfecto para tu mejor amigo.'],
+    ['Cuéntanos de tu mascota', 'Así preparamos todo a su medida.'],
+    ['¿Sumamos algún botánico?', 'Personaliza su estancia con extras.'],
+    ['Elige fecha y hora', 'Cupos limitados por día para garantizar calma.'],
+    ['Tus datos de contacto', 'Últimos detalles antes de confirmar.'],
+  ],
+  services: [
+    {
+      icon: 'bathtub',
+      title: 'Baño y secado',
+      price: 'Desde $28',
+      duration: '45 min',
+      iconBg: 'bg-secondary-container',
+      iconColor: 'text-secondary',
+    },
+    {
+      icon: 'content_cut',
+      title: 'Peluquería canina',
+      price: 'Desde $42',
+      duration: '60-90 min',
+      iconBg: 'bg-primary-fixed',
+      iconColor: 'text-primary',
+    },
+    {
+      icon: 'spa',
+      title: 'Spa relajante',
+      price: 'Desde $35',
+      duration: '50 min',
+      iconBg: 'bg-secondary-container',
+      iconColor: 'text-secondary',
+    },
+  ],
+  sizes: ['Pequeño', 'Mediano', 'Grande'],
+  addOns: [
+    { icon: 'spa', title: 'Mascarilla de Arándanos', subtitle: 'Limpia y abrillanta el lagrimal', price: '+$8' },
+    { icon: 'healing', title: 'Bálsamo de Karité & Cera', subtitle: 'Protección profunda de patitas', price: '+$6' },
+    { icon: 'air', title: 'Ozono & Manzanilla', subtitle: 'Regeneración dérmica y picores', price: '+$12' },
+    { icon: 'dentistry', title: 'Higiene Dental Enzimática', subtitle: 'Aliento fresco y prevención', price: '+$10' },
+  ],
+  slots: ['10:00', '11:30', '13:00', '15:00', '16:30', '18:00'],
+  confirmation: {
+    title: '¡Cita reservada!',
+    tail: 'con toallas tibias y aromaterapia de lavanda.',
+    again: 'Reservar otra cita',
+    reassurance: 'Sin cargos de cancelación hasta 24h antes',
+  },
+};
+
 export const footer = {
   tagline:
     'Cuidado boutique, bienestar holístico y cariño genuino para el miembro más peludo de tu familia.',
