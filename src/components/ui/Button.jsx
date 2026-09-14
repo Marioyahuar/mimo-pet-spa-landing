@@ -10,25 +10,45 @@ const VARIANTS = {
 };
 
 /**
- * Pill-shaped call to action link.
+ * Pill-shaped call to action. Renders as a link when `href` is set,
+ * otherwise as a real `<button>` (used by the booking wizard).
  */
 export default function Button({
-  href = '#',
+  href,
   children,
   variant = 'primary',
   icon,
   iconPosition = 'left',
   iconSize = 20,
+  fullWidth = false,
+  onClick,
+  type = 'button',
+  disabled = false,
   className = '',
 }) {
-  return (
-    <a
-      href={href}
-      className={`inline-flex items-center justify-center gap-space-xs rounded-full px-space-xl py-space-sm font-label-lg text-label-lg transition-all duration-200 ${VARIANTS[variant]} ${className}`}
-    >
+  const classes = `inline-flex items-center justify-center gap-space-xs rounded-full px-space-xl py-space-sm font-label-lg text-label-lg transition-all duration-200 ${
+    VARIANTS[variant]
+  } ${fullWidth ? 'w-full' : ''} ${disabled ? 'pointer-events-none opacity-50' : ''} ${className}`;
+
+  const inner = (
+    <>
       {icon && iconPosition === 'left' && <Icon name={icon} size={iconSize} />}
       <span>{children}</span>
       {icon && iconPosition === 'right' && <Icon name={icon} size={iconSize} />}
-    </a>
+    </>
+  );
+
+  if (href) {
+    return (
+      <a href={href} onClick={onClick} className={classes}>
+        {inner}
+      </a>
+    );
+  }
+
+  return (
+    <button type={type} onClick={onClick} disabled={disabled} className={classes}>
+      {inner}
+    </button>
   );
 }
