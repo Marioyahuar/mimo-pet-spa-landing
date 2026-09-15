@@ -92,6 +92,45 @@ export const services = {
       ],
       featured: false,
     },
+    {
+      icon: 'dentistry',
+      iconWrap: 'bg-primary-fixed text-primary',
+      title: 'Cuidado dental',
+      description:
+        'Limpieza dental enzimática suave que elimina placa y sarro sin anestesia, complementada con gel bucal saborizado para un aliento fresco y encías saludables.',
+      tags: [
+        { label: 'Desde $18', className: 'bg-surface-container text-on-surface' },
+        { label: '20-30 min', className: 'bg-surface-container text-on-surface-variant' },
+        { label: 'Aliento fresco', className: 'bg-primary-fixed/60 text-primary' },
+      ],
+      featured: false,
+    },
+    {
+      icon: 'pets',
+      iconWrap: 'bg-secondary-container/40 text-secondary',
+      title: 'Corte de uñas',
+      description:
+        'Recorte cuidadoso de uñas con esmerilado suave que evita astillados y molestias, ideal para mantener patitas sanas y una pisada cómoda entre visitas de spa.',
+      tags: [
+        { label: 'Desde $10', className: 'bg-surface-container text-on-surface' },
+        { label: '15 min', className: 'bg-surface-container text-on-surface-variant' },
+        { label: 'Sin estrés', className: 'bg-secondary-fixed/50 text-secondary' },
+      ],
+      featured: false,
+    },
+    {
+      icon: 'grass',
+      iconWrap: 'bg-secondary-container/40 text-secondary',
+      title: 'Baño herbal',
+      description:
+        'Inmersión relajante con infusión de hierbas botánicas naturales que calman la piel, refuerzan el pelaje y envuelven a tu mascota en un aroma fresco y herbal de principio a fin.',
+      tags: [
+        { label: 'Desde $30', className: 'bg-surface-container text-on-surface' },
+        { label: '60 min', className: 'bg-surface-container text-on-surface-variant' },
+        { label: 'Ingredientes naturales', className: 'bg-secondary-fixed/50 text-secondary' },
+      ],
+      featured: false,
+    },
   ],
 };
 
@@ -229,6 +268,30 @@ export const booking = {
       title: 'Spa relajante',
       price: 'Desde $35',
       duration: '50 min',
+      iconBg: 'bg-secondary-container',
+      iconColor: 'text-secondary',
+    },
+    {
+      icon: 'dentistry',
+      title: 'Cuidado dental',
+      price: 'Desde $18',
+      duration: '20-30 min',
+      iconBg: 'bg-primary-fixed',
+      iconColor: 'text-primary',
+    },
+    {
+      icon: 'pets',
+      title: 'Corte de uñas',
+      price: 'Desde $10',
+      duration: '15 min',
+      iconBg: 'bg-secondary-container',
+      iconColor: 'text-secondary',
+    },
+    {
+      icon: 'grass',
+      title: 'Baño herbal',
+      price: 'Desde $30',
+      duration: '60 min',
       iconBg: 'bg-secondary-container',
       iconColor: 'text-secondary',
     },
