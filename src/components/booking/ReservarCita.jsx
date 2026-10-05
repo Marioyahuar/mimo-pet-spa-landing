@@ -1,9 +1,13 @@
-import { useEffect, useState } from 'react';
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import Icon from '../ui/Icon.jsx';
 import Button from '../ui/Button.jsx';
 import Pill from '../ui/Pill.jsx';
 import Container from '../ui/Container.jsx';
 import { brand, booking } from '../../data/content.js';
+import { todayInBusinessTz, formatDateLabel } from '../../lib/time.js';
 
 const inputClass =
   'rounded border border-outline-variant bg-surface-container-low px-space-md py-space-sm font-body-md text-body-md text-on-surface outline-none transition-colors placeholder:text-outline focus:border-primary';
@@ -31,12 +35,12 @@ function BookingHeader() {
         </div>
 
         <div className="flex items-center gap-space-sm">
-          <a
-            href="#"
+          <Link
+            href="/"
             className="px-space-xs py-space-2xs font-title-md text-title-md text-on-surface-variant transition-colors hover:text-on-surface"
           >
             Volver al inicio
-          </a>
+          </Link>
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary shadow-[0_2px_6px_-1px_rgba(59,53,48,0.08)]">
             <Icon name="person" size={18} className="text-on-primary" />
           </div>
@@ -46,7 +50,12 @@ function BookingHeader() {
   );
 }
 
+// Número de WhatsApp del spa (solo dígitos, con código de país). Sin valor => no se muestra el botón.
+const WHATSAPP_NUMBER = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '').replace(/\D/g, '');
+
+// ADR-0011: la clave se genera una vez por intento y solo se regenera en resetFlow() (vía emptyState()).
 const emptyState = () => ({
+  idempotencyKey: crypto.randomUUID(),
   step: 0,
   confirmed: false,
   serviceTitle: booking.services[1].title,
@@ -55,18 +64,71 @@ const emptyState = () => ({
   date: '',
   time: '',
   contact: { name: '', phone: '', email: '' },
+  reservation: null, // reserva almacenada devuelta por la API (201 o 200)
 });
+
+function whatsappLink(r) {
+  const lines = [
+    'Hola Mimo Pet Spa, confirmo mi reserva:',
+    `Servicio: ${r.serviceTitle}${r.extras.length ? ` (+ ${r.extras.join(', ')})` : ''}`,
+    `Mascota: ${r.petName} (${r.petBreed}, ${r.petSize})`,
+    `Fecha: ${formatDateLabel(r.date)}`,
+    `Hora: ${r.time}`,
+    `Contacto: ${r.contactName} - ${r.contactPhone}`,
+  ];
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(lines.join('\n'))}`;
+}
+
+// Traduce la respuesta de error de la API a un mensaje visible y el paso al que volver (o null).
+function describeError(code, fields) {
+  const { errors, fieldLabels } = booking;
+  if (code === 'VALIDATION_ERROR') {
+    const names = (fields ?? []).map((f) => fieldLabels[f] ?? f).join(', ');
+    return { message: `${errors.VALIDATION_ERROR} ${names}.`, step: null };
+  }
+  if (code === 'SLOT_TAKEN' || code === 'DATE_IN_PAST') return { message: errors[code], step: 3 };
+  return { message: errors[code] ?? errors.INTERNAL_ERROR, step: null };
+}
 
 export default function ReservarCita() {
   const [state, setState] = useState(emptyState);
+  // Fecha de hoy en Lima (YYYY-MM-DD); se calcula en cliente tras montar para no desajustar la hidratación.
+  const [today, setToday] = useState('');
   const { step, pet, extras, date, time, contact } = state;
+  const [submitting, setSubmitting] = useState(false);
+  const submittingRef = useRef(false); // bloquea el doble toque antes del re-render
+  const [error, setError] = useState('');
+  const [occupied, setOccupied] = useState([]);
+  const [availabilityTick, setAvailabilityTick] = useState(0);
+
+  useEffect(() => {
+    setToday(todayInBusinessTz());
+  }, []);
+
+  // Horarios ocupados de la fecha elegida. Si falla se ignora: el servidor sigue siendo la autoridad (409).
+  useEffect(() => {
+    setOccupied([]);
+    if (!date) return undefined;
+    const controller = new AbortController();
+    fetch(`/api/reservations/availability?date=${encodeURIComponent(date)}`, {
+      cache: 'no-store',
+      signal: controller.signal,
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!data || !Array.isArray(data.occupied)) return;
+        setOccupied(data.occupied);
+        setState((s) => (data.occupied.includes(s.time) ? { ...s, time: '' } : s));
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, [date, availabilityTick]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [step, state.confirmed]);
 
   const service = booking.services.find((s) => s.title === state.serviceTitle) ?? booking.services[1];
-  const today = new Date().toISOString().split('T')[0];
 
   const canProceed =
     (step === 1 && (!pet.name || !pet.breed)) ||
@@ -77,23 +139,73 @@ export default function ReservarCita() {
 
   const patchPet = (patch) => setState((s) => ({ ...s, pet: { ...s.pet, ...patch } }));
   const patchContact = (patch) => setState((s) => ({ ...s, contact: { ...s.contact, ...patch } }));
-  const goNext = () => setState((s) => ({ ...s, step: Math.min(4, s.step + 1) }));
-  const goBack = () => setState((s) => ({ ...s, step: Math.max(0, s.step - 1) }));
-  const confirmBooking = () => setState((s) => ({ ...s, confirmed: true }));
-  const resetFlow = () => setState(emptyState());
+  const goNext = () => {
+    setError('');
+    setState((s) => ({ ...s, step: Math.min(4, s.step + 1) }));
+  };
+  const goBack = () => {
+    setError('');
+    setState((s) => ({ ...s, step: Math.max(0, s.step - 1) }));
+  };
+
+  const confirmBooking = async () => {
+    if (submittingRef.current) return;
+    submittingRef.current = true;
+    setSubmitting(true);
+    setError('');
+    try {
+      const res = await fetch('/api/reservations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          serviceTitle: service.title,
+          servicePriceLabel: service.price,
+          extras,
+          petName: pet.name,
+          petBreed: pet.breed,
+          petSize: pet.size,
+          petNotes: pet.notes,
+          date,
+          time,
+          contactName: contact.name,
+          contactPhone: contact.phone,
+          contactEmail: contact.email,
+          idempotencyKey: state.idempotencyKey,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 201 || res.status === 200) {
+        setState((s) => ({ ...s, confirmed: true, reservation: data }));
+        return;
+      }
+      const { message, step: backTo } = describeError(data?.error, data?.fields);
+      setError(message);
+      if (data?.error === 'SLOT_TAKEN') {
+        setAvailabilityTick((n) => n + 1);
+        setState((s) => ({ ...s, step: 3, time: '' }));
+      } else if (backTo !== null) {
+        setState((s) => ({ ...s, step: backTo, time: '' }));
+      }
+    } catch {
+      // Falla de red: la idempotencyKey se conserva, el reintento es seguro (ADR-0011).
+      setError(booking.errors.NETWORK);
+    } finally {
+      submittingRef.current = false;
+      setSubmitting(false);
+    }
+  };
+
+  const resetFlow = () => {
+    setError('');
+    setState(emptyState());
+  };
   const toggleExtra = (title) =>
     setState((s) => ({
       ...s,
       extras: s.extras.includes(title) ? s.extras.filter((x) => x !== title) : [...s.extras, title],
     }));
 
-  const dateFmt = date
-    ? new Date(`${date}T00:00:00`).toLocaleDateString('es-ES', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-      })
-    : '';
+  const dateFmt = formatDateLabel(date);
   const summary = {
     service: service.title,
     price: service.price,
@@ -107,6 +219,8 @@ export default function ReservarCita() {
 
   if (state.confirmed) {
     const { confirmation } = booking;
+    const r = state.reservation;
+    const confirmedSummary = `${r.serviceTitle} para ${r.petName} (${r.petBreed || 'sin raza'}, ${r.petSize}). Te esperamos el ${formatDateLabel(r.date)} a las ${r.time}`;
     return (
       <div className="min-h-screen bg-background font-body-md text-on-surface antialiased">
         <BookingHeader />
@@ -118,9 +232,14 @@ export default function ReservarCita() {
             {confirmation.title}
           </h1>
           <p className="mx-auto mb-space-xl max-w-[420px] font-body-lg text-body-lg leading-relaxed text-on-surface-variant">
-            {summary.service} para {summary.pet}. Te esperamos {summary.datetime} {confirmation.tail}
+            {confirmedSummary} {confirmation.tail}
           </p>
           <div className="inline-flex flex-col items-center gap-space-xs">
+            {WHATSAPP_NUMBER && (
+              <Button href={whatsappLink(r)} variant="soft" icon="chat">
+                {confirmation.whatsapp}
+              </Button>
+            )}
             <Button onClick={resetFlow}>{confirmation.again}</Button>
             <p className="mt-space-md font-body-sm text-body-sm text-outline">{confirmation.reassurance}</p>
           </div>
@@ -285,7 +404,10 @@ export default function ReservarCita() {
                   type="date"
                   value={date}
                   min={today}
-                  onChange={(e) => setState((s) => ({ ...s, date: e.target.value }))}
+                  onChange={(e) => {
+                    setError('');
+                    setState((s) => ({ ...s, date: e.target.value, time: '' }));
+                  }}
                   className={inputClass}
                 />
               </Field>
@@ -294,12 +416,17 @@ export default function ReservarCita() {
                 <div className="grid grid-cols-3 gap-space-xs">
                   {booking.slots.map((tm) => {
                     const on = tm === time;
+                    const taken = occupied.includes(tm);
                     return (
                       <button
                         key={tm}
                         type="button"
-                        onClick={() => setState((s) => ({ ...s, time: tm }))}
-                        className={`rounded-full border px-space-xs py-space-xs font-title-md text-label-lg font-semibold transition-colors ${
+                        disabled={taken}
+                        onClick={() => {
+                          setError('');
+                          setState((s) => ({ ...s, time: tm }));
+                        }}
+                        className={`rounded-full border px-space-xs py-space-xs font-title-md text-label-lg font-semibold transition-colors disabled:cursor-not-allowed disabled:line-through disabled:opacity-40 ${
                           on
                             ? 'border-primary bg-primary-fixed text-primary'
                             : 'border-outline-variant bg-surface-container-low text-on-surface-variant hover:bg-surface-container'
@@ -367,6 +494,15 @@ export default function ReservarCita() {
             </div>
           )}
 
+          {error && (
+            <p
+              role="alert"
+              className="mt-space-lg rounded border border-error bg-error-container px-space-md py-space-sm font-body-sm text-body-sm text-on-error-container"
+            >
+              {error}
+            </p>
+          )}
+
           <div className="mt-space-xl flex min-w-0 gap-space-sm">
             {step > 0 && (
               <div className="shrink-0">
@@ -387,8 +523,13 @@ export default function ReservarCita() {
                   Continuar
                 </Button>
               ) : (
-                <Button fullWidth icon="calendar_month" onClick={confirmBooking} disabled={!canProceed}>
-                  Confirmar reserva
+                <Button
+                  fullWidth
+                  icon="calendar_month"
+                  onClick={confirmBooking}
+                  disabled={!canProceed || submitting}
+                >
+                  {submitting ? 'Confirmando…' : 'Confirmar reserva'}
                 </Button>
               )}
             </div>

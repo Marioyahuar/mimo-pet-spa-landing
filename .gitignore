@@ -1,7 +1,10 @@
 node_modules
 dist
+.next
 .DS_Store
 *.local
 
 # tooling
 .atl
+.neon
+.env

@@ -48,7 +48,7 @@ function ServiceCard({ item }) {
           ))}
         </div>
         <a
-          href="#reservar"
+          href="/reservar"
           className={`inline-flex w-full items-center justify-between rounded-xl px-space-md py-space-sm font-label-lg text-label-lg transition-colors duration-200 ${ctaTone}`}
         >
           <span>Seleccionar ritual</span>

@@ -5,7 +5,7 @@ import { ctaBanner } from '../data/content.js';
 
 export default function CtaBanner() {
   return (
-    <section id="reservar" className="w-full py-space-3xl lg:py-space-4xl">
+    <section className="w-full py-space-3xl lg:py-space-4xl">
       <Container>
         <div className="relative overflow-hidden rounded-[2.5rem] bg-primary-container p-space-xl shadow-[0_20px_50px_-8px_rgba(232,146,124,0.45)] sm:p-space-3xl">
           <div className="pointer-events-none absolute -bottom-16 -right-16 h-80 w-80 rounded-full bg-white/10 blur-2xl" />
@@ -25,7 +25,7 @@ export default function CtaBanner() {
               {ctaBanner.subtitle}
             </p>
 
-            <Button href="#contacto" variant="light" icon="calendar_month" className="px-space-2xl py-space-md">
+            <Button href="/reservar" variant="light" icon="calendar_month" className="px-space-2xl py-space-md">
               {ctaBanner.button}
             </Button>
 

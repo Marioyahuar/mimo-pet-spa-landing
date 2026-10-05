@@ -60,7 +60,7 @@ export default function Hero() {
             </p>
 
             <div className="flex w-full flex-wrap items-center gap-space-sm pt-space-xs sm:w-auto sm:gap-space-md">
-              <Button href="#reservar" icon="pets" className="w-full sm:w-auto">
+              <Button href="/reservar" icon="pets" className="w-full sm:w-auto">
                 Reservar cita
               </Button>
               <Button

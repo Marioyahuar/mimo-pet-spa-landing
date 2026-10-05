@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import Icon from './Icon.jsx';
 
 const VARIANTS = {
@@ -40,9 +41,9 @@ export default function Button({
 
   if (href) {
     return (
-      <a href={href} onClick={onClick} className={classes}>
+      <Link href={href} onClick={onClick} className={classes}>
         {inner}
-      </a>
+      </Link>
     );
   }
 

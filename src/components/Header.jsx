@@ -32,7 +32,7 @@ export default function Header() {
 
         <div className="flex items-center gap-space-sm sm:gap-space-md">
           <a
-            href="#reservar"
+            href="/reservar"
             className="inline-flex items-center justify-center rounded-full bg-primary-container px-space-lg py-space-sm font-label-lg text-label-lg text-on-primary shadow-[0_8px_24px_-2px_rgba(232,146,124,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary hover:text-on-primary"
           >
             Reservar cita

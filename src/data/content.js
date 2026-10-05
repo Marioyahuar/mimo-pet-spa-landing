@@ -309,6 +309,27 @@ export const booking = {
     tail: 'con toallas tibias y aromaterapia de lavanda.',
     again: 'Reservar otra cita',
     reassurance: 'Sin cargos de cancelación hasta 24h antes',
+    whatsapp: 'Reenviar por WhatsApp',
+  },
+  errors: {
+    SLOT_TAKEN: 'Ese horario acaba de ser reservado por otra persona. Elige otro horario.',
+    DATE_IN_PAST: 'Ese horario ya pasó. Elige una fecha y hora futuras.',
+    VALIDATION_ERROR: 'Revisa estos datos antes de confirmar:',
+    INTERNAL_ERROR: 'Tuvimos un problema al guardar tu reserva. Intenta confirmar de nuevo.',
+    NETWORK: 'No pudimos conectar con el servidor. Revisa tu conexión e intenta confirmar de nuevo.',
+  },
+  fieldLabels: {
+    serviceTitle: 'servicio',
+    petName: 'nombre de la mascota',
+    petBreed: 'raza',
+    petSize: 'tamaño',
+    petNotes: 'notas',
+    extras: 'extras',
+    date: 'fecha',
+    time: 'hora',
+    contactName: 'nombre',
+    contactPhone: 'teléfono',
+    contactEmail: 'correo',
   },
 };
 
@@ -334,7 +355,7 @@ export const footer = {
       links: [
         { label: 'Preguntas Frecuentes', href: '#faq' },
         { label: 'Contacto', href: '#contacto' },
-        { label: 'Agendar Sesión', href: '#reservar' },
+        { label: 'Agendar Sesión', href: '/reservar' },
       ],
     },
     {
